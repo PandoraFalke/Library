@@ -34,14 +34,14 @@ namespace Library.Database
         /// Hierbei ist zu beachten, dass die Spalten in der Datenbank
         /// genauso heißen müssen wie die Propertys des Objektes
         /// </summary>
-        /// <param name="o">Objekt welches durchlaufen wird</param>
+        /// <param name="obj">Objekt welches durchlaufen wird</param>
         /// <returns></returns>
-        public static string CreateWhere(object o)
+        public static string CreateWhere(object obj)
         {
             ///Erstellt ein PropertyInfo Array, welches die anzahl einer Propierties
             ///des Objektes besitzt.
             ///Um an die Properties zu gelangen, muss man sich erst den Type des Objektes holen
-            PropertyInfo[] pia = o.GetType().GetProperties();
+            PropertyInfo[] pia = obj.GetType().GetProperties();
 
             ///Erstellt einen StringBuilder, welcher im Folgenden die Where-Bedinung erstellt
             StringBuilder where = new StringBuilder();
@@ -52,22 +52,22 @@ namespace Library.Database
             {
                 ///Sofern der PropertyType nicht der Typ des Objektes ist
                 ///Zum Beispiel bei einer Variable vom Typ des Objektes (Ticket in Ticket oder so)
-                if (pi.PropertyType != o.GetType())
-                    where.Append($" {pi.Name} = {ObjectToString(pi.GetValue(o))} AND");
+                if (pi.PropertyType != obj.GetType())
+                    where.Append($" {pi.Name} = {ObjectToString(pi.GetValue(obj))} AND");
             }
             ///Löscht die letzten 4 Zeichen des String
             ///in diesem Fall' AND'
             where.Remove(where.Length - 4, 4);
             return where.ToString();
         }
-
+       
         /// <summary>
         /// Erstellt einen Delete-Befehl für das angegebene Objekt
         /// Hierbei ist wichtig, dass der Typ des Objektes ebenso heißt wie der Tabellenname
         /// </summary>
         /// <param name="obj">Objekt welches gelöscht werden soll</param>
         /// <returns></returns>
-        public string CreateDelete(object obj)
+        public static string CreateDelete(object obj)
         {
             ///Ermittelt den Typ des Übergebenen Objektes
             Type t = obj.GetType();
@@ -89,7 +89,7 @@ namespace Library.Database
         /// </summary>
         /// <param name="obj">Das Object welches in die Datenbank übernommen werden soll</param>
         /// <returns></returns>
-        public string CreateInsert(object obj)
+        public static string CreateInsert(object obj)
         {
             ///Solange das Object nicht leer ist
             if (obj != null)
@@ -135,6 +135,21 @@ namespace Library.Database
             }
         }
 
+        public static string CreateUpdate(object obj)
+        {
+            Type t = obj.GetType();
+            PropertyInfo[] pia = t.GetProperties();
+            StringBuilder update = new StringBuilder();
+            update.Append($"UPDATE {t.Name} SET ");
+            foreach(PropertyInfo pi in pia)
+            {
+                object o = pi.GetValue(obj);
+                update.Append($"{pi.Name} = {ObjectToString(o)}, ");
+            }
+            update.Remove(update.Length - 2, 2);
+            return update.ToString();
+        }
+       
         /// <summary>
         /// Dient zum erhalt der Values des Objektes als String
         /// Je nach Type der Propertie wird ein anderer String zurück gegeben
