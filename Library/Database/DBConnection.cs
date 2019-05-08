@@ -124,56 +124,6 @@ namespace Library.Database
         }
 
         /// <summary>
-        /// Erstellt eine Where Bedingung für einen SQL-Befehl
-        ///  welcher sich an den Properties des Objektes orientiert
-        ///  
-        /// Hierbei ist zu beachten, dass die Spalten in der Datenbank
-        /// genauso heißen müssen wie die Propertys des Objektes
-        /// </summary>
-        /// <param name="o">Objekt welches durchlaufen wird</param>
-        /// <returns></returns>
-        public static string CreateWhere(object o)
-        {
-            ///Erstellt ein PropertyInfo Array, welches die anzahl einer Propierties
-            ///des Objektes besitzt.
-            ///Um an die Properties zu gelangen, muss man sich erst den Type des Objektes holen
-            PropertyInfo[] pia = o.GetType().GetProperties();
-
-            ///Erstellt einen StringBuilder, welcher im Folgenden die Where-Bedinung erstellt
-            StringBuilder where = new StringBuilder();
-            where.Append(" Where");
-
-            ///Für jede PropertyInfo innerhalb des zuvor erstellten Arrays, wird diese Schleife nun durchlaufen
-            foreach(PropertyInfo pi in pia)
-            {
-                ///Sofern der PropertyType nicht der Typ des Objektes ist
-                ///Zum Beispiel bei einer Variable vom Typ des Objektes (Ticket in Ticket oder so)
-                if (pi.PropertyType != o.GetType())
-                {
-                    ///Locale Variable der Übersicht halber
-                    object obj = pi.GetValue(o);
-
-                    ///Wenn die Property ein DateTime ist
-                    if (obj is DateTime date)
-                        where.Append($" {pi.Name} = '{date.ToString("yyyy-MM-dd")}' AND");
-
-                    ///Wenn die Property ein enum ist
-                    else if(pi.PropertyType.IsEnum)
-                        ///Der Cast für (int) ist nötigt um nicht die Value des Enum zu erhalten
-                        where.Append($" {pi.Name} = '{(int)obj}' AND");
-
-                    ///Für alle anderen PropertyTypen
-                    else
-                        where.Append($" {pi.Name} = '{obj.ToString()}' AND");
-                }
-            }
-            ///Löscht die letzten 4 Zeichen des String
-            ///in diesem Fall' AND'
-            where.Remove(where.Length - 4, 4);
-            return where.ToString();
-        }
-
-        /// <summary>
         /// Erstellt eine Liste um alle Datensätze auszulesen
         /// Hierbei kann sie oft verwendet werden, da kein spezieller Typ festgelegt ist
         /// </summary>
@@ -197,7 +147,7 @@ namespace Library.Database
                 object obj = Activator.CreateInstance(typeof(T), null);
 
                 ///Für jedes Feld im Reader (Spalte in der Datenbank)
-                for(int i = 0; i<reader.FieldCount; i++)
+                for (int i = 0; i < reader.FieldCount; i++)
                 {
                     ///Eine string Variable vom Namen der Spalte des Reader
                     ///dient der vereinfachung des Codes
@@ -214,29 +164,5 @@ namespace Library.Database
             reader.Close();
             return list;
         }
-
-        /// <summary>
-        /// Erstellt einen Delete-Befehl für das angegebene Objekt
-        /// Hierbei ist wichtig, dass der Typ des Objektes ebenso heißt wie der Tabellenname
-        /// </summary>
-        /// <param name="obj">Objekt welches gelöscht werden soll</param>
-        /// <returns></returns>
-        public bool CreateDelete(object obj)
-        {
-            ///Ermittelt den Typ des Übergebenen Objektes
-            Type t = obj.GetType();
-
-            ///StringBuilder zum erhalt des SQL Befehls
-            StringBuilder delete = new StringBuilder();
-            ///DELETE FROM {Tabellenname} {Where...}
-            delete.Append($"DELETE FROM {t.ToString()} {CreateWhere(obj)}");
-
-            ///Sofern nur eine Zeile bearbeitet wurde
-            ///ist alles gut und es gibt 'true' zurück
-            ///Ansonsten gibts einen Fehler und 'false' wird zurück gegeben
-            return ExecuteNonQuery(delete.ToString()) == 1;
-
-        }
-
     }
 }
