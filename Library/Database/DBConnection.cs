@@ -172,67 +172,14 @@ namespace Library.Database
         /// <param name="newObj">Neues Objekt, erhalt durch Aenderungen im Fenster</param>
         public bool Update(object oldObj, object newObj)
         {
-            bool check = false;
             StringBuilder update = new StringBuilder();
             ///'Update From...' Durch CreateUpdate
             ///'Where...' Durch CreateWhere
             update.Append($"{DBSql.CreateUpdate(newObj)}{DBSql.CreateWhere(oldObj)}");
-            ///Wenn Transaktion nicht vorhanden
-            if (_trans == null)
-            {
-              
-                ///Liest den akutellen Datensatz aus der Datenbank aus
-                MySqlDataReader reader = ExecuteReader(ReadSingleOnId(newObj));
-                reader.Read();
-                ///Speichert den aktuellen Datensatz in einem Objekt
-                object currentObj = reader.CreateObjRef(newObj.GetType());
 
-                ///Wenn das alte Objekt dem aktuellen entspricht
-                ///so ist alles in Ordnung und niemand hat in der zwischenzeit etwas geändert
-                if (oldObj.Equals(currentObj))
-                {
-                    ///Sofern das NonQuery 1 ausgiebt hat alles gepasst, ansonsten gab es einen Fehler
-                    if (ExecuteNonQuery(update.ToString()) != 1)
-                        throw new Exception("Fehler beim Speichern!");
-                    else
-                        check = true;
-                }
-                ///Datensatz wurde in der Zwischenzeit geändert
-                else
-                    throw new Exception("Datensatz zwischenzeitlich geändert");             
-            }
-            ///Es gibt eine Transaktion
-            else
-            {
-                ///Aktuelles Objekt aus der Datenbank erstellen -> siehe oben
-                MySqlDataReader reader = ExecuteReader(ReadSingleOnId(newObj));
-                reader.Read();
-                object currentObj = reader.CreateObjRef(newObj.GetType());
-
-                if (oldObj.Equals(currentObj))
-                {
-                    ///Wenn NonQuery 1 ausgiebt
-                    if (ExecuteNonQuery(update.ToString()) == 1)
-                    {
-                        ///Führen wir den Commit aus und bestätigen unsere Aktion
-                        Commit();
-                        check = true;
-                    }
-                    ///Wenn NonQuery irgendwas anderes ausgiebt
-                    else
-                    {
-                        ///Gehen wir den Schritt zurück und machen unsere Aktion rückgänging
-                        RollBack();
-                        ///Außerdem wird eine Exception geworfen
-                        throw new Exception("Fehler beim Speichern!");
-                    }
-                }
-                else
-                    throw new Exception("Datensatz zwischenzeitlich geändert");
-            }
-            return check;
+            return ExecuteNonQuery(update.ToString()) == 1;
         }
-        public string ReadSingleOnId(object obj)
+        public string CreateSelectSingleOnId(object obj)
         {
             PropertyInfo[] pia = obj.GetType().GetProperties();
             int id =0;
